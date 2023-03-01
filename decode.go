@@ -43,7 +43,7 @@ func (e DecodeError) Error() string {
 // either by its field name or tag. Values are then decoded according to the
 // type of the destination field.
 //
-// Sections must be unmarshaled into a struct. Unmarshal matches the section
+// Sections must be unmarshalled into a struct. Unmarshal matches the section
 // name to a struct field name or tag. Subsequent property keys are then matched
 // against struct field names or tags within the struct.
 //
@@ -101,7 +101,7 @@ func decode(tree parseTree, rv reflect.Value) error {
 
 		for i := 0; i < rv.NumField(); i++ {
 			sf := rv.Type().Field(i)
-			sv := rv.Field(i).Addr()
+			sv := rv.Field(i)
 
 			t := newTag(sf)
 			if t.name == "-" {
@@ -113,14 +113,28 @@ func decode(tree parseTree, rv reflect.Value) error {
 				return err
 			}
 
+			if len(sections) == 0 {
+				continue
+			}
+
 			switch sf.Type.Kind() {
 			case reflect.Struct:
-				if err := decodeStruct(sections[0], sv); err != nil {
+				if err := decodeStruct(sections[0], sv.Addr()); err != nil {
 					return err
 				}
 			case reflect.Slice:
 				if sf.Type.Elem().Kind() == reflect.Struct {
-					if err := decodeSliceStruct(sections, sv); err != nil {
+					if err := decodeSliceStruct(sections, sv.Addr()); err != nil {
+						return err
+					}
+				}
+			case reflect.Ptr:
+				if sv.IsNil() {
+					sv.Set(reflect.New(sf.Type.Elem()))
+				}
+				sv = reflect.Indirect(sv)
+				if sv.Kind() == reflect.Struct {
+					if err := decodeStruct(sections[0], sv.Addr()); err != nil {
 						return err
 					}
 				}

@@ -106,6 +106,16 @@ func TestEncodeProperty(t *testing.T) {
 			wantError:   &MarshalTypeError{reflect.TypeOf(struct{}{})},
 		},
 		{
+			desc: "encode struct pointer",
+			input: struct {
+				key string
+				val interface{}
+			}{"", &struct{}{}},
+			want:        nil,
+			shouldError: true,
+			wantError:   &MarshalTypeError{reflect.TypeOf(&struct{}{})},
+		},
+		{
 			desc: "encode slice of ",
 			input: struct {
 				key string
@@ -267,6 +277,30 @@ func TestEncode(t *testing.T) {
 				N struct{}
 			}{struct{}{}, struct{}{}},
 			want: bytes.NewBufferString("\n[N]\n\n"),
+		},
+		{
+			desc: "omitempty omits nil struct pointer field",
+			input: struct {
+				Z *struct{} `ini:",omitempty"`
+				N struct{}
+			}{nil, struct{}{}},
+			want: bytes.NewBufferString("\n[N]\n\n"),
+		},
+		{
+			desc: "encode struct pointer field",
+			input: struct {
+				N *struct{}
+			}{&struct{}{}},
+			want: bytes.NewBufferString("\n[N]\n\n"),
+		},
+		{
+			desc: "encode nil struct pointer field without omitempty",
+			input: struct {
+				N *struct{}
+			}{nil},
+			want:        nil,
+			shouldError: true,
+			wantError:   &MarshalTypeError{reflect.TypeOf(struct{}{})},
 		},
 		{
 			desc:        "encode error section property",

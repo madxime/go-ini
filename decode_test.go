@@ -685,6 +685,68 @@ func TestDecode(t *testing.T) {
 			},
 		},
 		{
+			description: "decode top-level struct with struct pointer field",
+			input: parseTree{
+				global: section{
+					props: map[string]property{},
+				},
+				sections: map[string][]section{
+					"section1": {
+						{
+							name: "section1",
+							props: map[string]property{
+								"key1": {
+									key: "key1",
+									vals: map[string][]string{
+										"": {"value1"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &struct {
+				Section *struct {
+					Key string `ini:"key1"`
+				} `ini:"section1"`
+			}{
+				Section: &struct {
+					Key string `ini:"key1"`
+				}{
+					Key: "value1",
+				},
+			},
+			init: func() interface{} {
+				return &struct {
+					Section *struct {
+						Key string `ini:"key1"`
+					} `ini:"section1"`
+				}{}
+			},
+		},
+		{
+			description: "decode top-level struct with struct pointer field when section is not present",
+			input: parseTree{
+				global: section{
+					props: map[string]property{},
+				},
+				sections: map[string][]section{},
+			},
+			want: &struct {
+				Section *struct {
+					Key string `ini:"key1"`
+				} `ini:"section1"`
+			}{},
+			init: func() interface{} {
+				return &struct {
+					Section *struct {
+						Key string `ini:"key1"`
+					} `ini:"section1"`
+				}{}
+			},
+		},
+		{
 			description: "decode top-level map",
 			input:       parseTree{},
 			want:        map[string]interface{}{},
