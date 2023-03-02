@@ -190,6 +190,39 @@ func TestEncodeSection(t *testing.T) {
 			want: bytes.NewBufferString("[s]\nN=1\n\n"),
 		},
 		{
+			desc: "omitempty omits zero value of map",
+			input: struct {
+				key string
+				val interface{}
+			}{"s", struct {
+				Z map[string]string `ini:",omitempty"`
+				N int               `ini:"N"`
+			}{nil, 1}},
+			want: bytes.NewBufferString("[s]\nN=1\n\n"),
+		},
+		{
+			desc: "omitempty omits zero value of slice",
+			input: struct {
+				key string
+				val interface{}
+			}{"s", struct {
+				Z []string `ini:",omitempty"`
+				N int      `ini:"N"`
+			}{nil, 1}},
+			want: bytes.NewBufferString("[s]\nN=1\n\n"),
+		},
+		{
+			desc: "omitempty omits zero value of pointer",
+			input: struct {
+				key string
+				val interface{}
+			}{"s", struct {
+				Z *string `ini:",omitempty"`
+				N int     `ini:"N"`
+			}{nil, 1}},
+			want: bytes.NewBufferString("[s]\nN=1\n\n"),
+		},
+		{
 			desc: "encode error non-struct",
 			input: struct {
 				key string
