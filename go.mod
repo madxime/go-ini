@@ -1,4 +1,4 @@
-module git.sr.ht/~spc/go-ini
+module github.com/madxime/go-ini
 
 go 1.12
 
