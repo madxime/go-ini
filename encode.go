@@ -175,8 +175,17 @@ func encodeSection(buf *bytes.Buffer, key string, rv reflect.Value) error {
 			continue
 		}
 
-		if t.omitempty && sv.Interface() == reflect.Zero(sv.Type()).Interface() {
-			continue
+		if t.omitempty {
+			switch sf.Type.Kind() {
+			case reflect.Slice, reflect.Map:
+				if sv.Len() == 0 {
+					continue
+				}
+			default:
+				if sv.Interface() == reflect.Zero(sv.Type()).Interface() {
+					continue
+				}
+			}
 		}
 
 		if err := encodeProperty(buf, t.name, sv); err != nil {
