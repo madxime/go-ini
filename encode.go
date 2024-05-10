@@ -56,11 +56,11 @@ func (e *MarshalerError) Error() string {
 //
 // Examples of struct field tags and their meanings:
 //
-//   // Field appears in INI as key "myName".
-//   Field int `ini:"myName"`
+//	// Field appears in INI as key "myName".
+//	Field int `ini:"myName"`
 //
-//   // Field is ignored by this package.
-//   Field int `ini:"-"`
+//	// Field is ignored by this package.
+//	Field int `ini:"-"`
 //
 // Boolean values encode as the string literal "true" or "false".
 //
@@ -118,6 +118,11 @@ func encode(buf *bytes.Buffer, rv reflect.Value) error {
 			continue
 		}
 
+		// skip slices of structs
+		if sf.Type.Kind() == reflect.Slice && sf.Type.Elem().Kind() == reflect.Struct {
+			continue
+		}
+
 		if t.omitempty && sv.Interface() == reflect.Zero(sv.Type()).Interface() {
 			continue
 		}
@@ -147,12 +152,23 @@ func encode(buf *bytes.Buffer, rv reflect.Value) error {
 			sv = reflect.Indirect(sv)
 		}
 
-		if t.name == "-" || sv.Type().Kind() != reflect.Struct {
+		if t.name == "-" {
 			continue
 		}
 
-		if err := encodeSection(buf, t.name, sv); err != nil {
-			return err
+		if sv.Type().Kind() == reflect.Struct {
+			if err := encodeSection(buf, t.name, sv); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if sv.Type().Kind() == reflect.Slice && sf.Type.Elem().Kind() == reflect.Struct {
+			for j := 0; j < sv.Len(); j++ {
+				if err := encodeSection(buf, t.name, sv.Index(j)); err != nil {
+					return err
+				}
+			}
 		}
 	}
 

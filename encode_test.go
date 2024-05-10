@@ -327,6 +327,20 @@ func TestEncode(t *testing.T) {
 			want: bytes.NewBufferString("\n[N]\n\n"),
 		},
 		{
+			desc: "encode slice of struct",
+			input: struct {
+				N []struct{}
+			}{[]struct{}{{}, {}}},
+			want: bytes.NewBufferString("\n[N]\n\n[N]\n\n"),
+		},
+		{
+			desc: "encode global slice of int",
+			input: struct {
+				N []int
+			}{[]int{1, 2}},
+			want: bytes.NewBufferString("N=1\nN=2\n\n"),
+		},
+		{
 			desc: "encode nil struct pointer field without omitempty",
 			input: struct {
 				N *struct{}
